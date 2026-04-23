@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OYADO KANRI｜イマここ診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a2744;
+  --navy2: #2c4a8a;
+  --gold: #c9a84c;
+  --gold-light: #f0d88a;
+  --cream: #faf8f3;
+  --light: #f3f0e8;
+  --gray: #6b7280;
+  --green: #1a6b4a;
+  --green-light: #e8f5ee;
+  --brown: #7a4a1a;
+  --white: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--cream);
+  color: var(--navy);
+  min-height: 100vh;
+}
+.header {
+  background: var(--navy);
+  padding: 18px 20px 14px;
+}
+.header-logo { color: var(--gold); font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.header-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 3px; }
+
+.prog-wrap {
+  background: var(--white);
+  border-bottom: 1px solid #e5e0d0;
+  padding: 12px 20px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prog-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray); margin-bottom: 6px; }
+.prog-bar-bg { height: 5px; background: var(--light); border-radius: 3px; overflow: hidden; }
+.prog-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 3px; transition: width 0.5s ease; }
+.phase-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.ptag { font-size: 10px; padding: 2px 9px; border-radius: 10px; background: var(--light); color: var(--gray); }
+.ptag.active { background: var(--navy); color: var(--gold); font-weight: 700; }
+.ptag.done { background: var(--green-light); color: var(--green); }
+
+.main { max-width: 600px; margin: 0 auto; padding: 28px 16px 60px; }
+.screen { display: none; }
+.screen.active { display: block; animation: fadeUp 0.35s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  background: var(--white); border-radius: 14px;
+  padding: 24px 20px; box-shadow: 0 2px 14px rgba(26,39,68,0.07); margin-bottom: 16px;
+}
+.phase-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 10px; margin-bottom: 10px;
+}
+.card-title { font-size: 19px; font-weight: 700; line-height: 1.4; margin-bottom: 6px; }
+.card-desc { font-size: 13px; color: var(--gray); line-height: 1.8; margin-bottom: 18px; }
+.q-label {
+  font-size: 13px; font-weight: 700; color: var(--navy);
+  padding: 10px 14px; background: var(--light);
+  border-left: 3px solid var(--gold); border-radius: 6px; margin-bottom: 12px;
+}
+.btn-row { display: flex; gap: 10px; }
+.btn {
+  flex: 1; padding: 13px; border-radius: 10px; border: 2px solid;
+  font-family: 'Noto Sans JP', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-yes { background: var(--navy); border-color: var(--navy); color: var(--white); }
+.btn-yes:hover { background: #253362; }
+.btn-no { background: var(--white); border-color: #ddd; color: var(--gray); }
+.btn-no:hover { background: var(--light); }
+.btn-start {
+  width: 100%; padding: 16px; border-radius: 10px; border: none;
+  background: var(--gold); color: var(--navy);
+  font-family: 'Noto Sans JP', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.btn-start:hover { background: #b8952e; }
+
+.imakoko-box {
+  background: linear-gradient(135deg, var(--navy), #253362);
+  border-radius: 14px; padding: 26px 20px;
+  color: var(--white); text-align: center; margin-bottom: 16px;
+}
+.ik-eyebrow { font-size: 10px; letter-spacing: 3px; color: var(--gold-light); margin-bottom: 6px; }
+.ik-phase { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 4px; }
+.ik-title { font-size: 22px; font-weight: 700; color: var(--gold); margin-bottom: 14px; line-height: 1.4; }
+.ik-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 20px;
+}
+.s-wait { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+.s-action { background: var(--gold); color: var(--navy); }
+.s-done { background: rgba(45,122,79,0.35); color: #7df5a8; }
+
+.action-card {
+  background: var(--white); border-radius: 14px; padding: 20px;
+  box-shadow: 0 2px 14px rgba(26,39,68,0.07); margin-bottom: 16px;
+}
+.ac-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+.ac-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--light);
+  font-size: 13px; line-height: 1.6; color: var(--navy);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--gold); color: var(--navy);
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
+
+.wait-card {
+  background: var(--light); border-radius: 14px;
+  padding: 20px; text-align: center; margin-bottom: 16px;
+}
+.wait-icon { font-size: 30px; margin-bottom: 8px; }
+.wait-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.wait-desc { font-size: 12px; color: var(--gray); line-height: 1.8; }
+
+.complete-card {
+  background: linear-gradient(135deg, #e8f5ee, #d4f0e0);
+  border-radius: 14px; padding: 24px; text-align: center; margin-bottom: 16px;
+}
+
+.rm-card {
+  background: var(--white); border-radius: 14px; padding: 20px;
+  box-shadow: 0 2px 14px rgba(26,39,68,0.07); margin-bottom: 16px;
+}
+.rm-card-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+.rm-phase { margin-bottom: 12px; }
+.rm-phase-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 10px; display: inline-block; margin-bottom: 8px;
+}
+.rm-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--light); font-size: 12px;
+}
+.rm-row:last-child { border-bottom: none; }
+.rm-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; flex-shrink: 0; }
+.rm-dot.done { background: var(--green); }
+.rm-dot.current { background: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.3); }
+.rm-row.row-done { color: var(--gray); }
+.rm-row.row-current { font-weight: 700; color: var(--navy); }
+.rm-now-badge {
+  margin-left: auto; font-size: 9px; font-weight: 700;
+  background: var(--gold); color: var(--navy); padding: 2px 7px; border-radius: 8px; white-space: nowrap;
+}
+.rm-check { margin-left: auto; font-size: 11px; color: var(--green); }
+.parallel-note {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 10px; font-weight: 700; color: var(--navy2);
+  background: #eef2fa; border-radius: 8px; padding: 5px 10px; margin: 2px 0 8px;
+}
+.parallel-cols { display: flex; gap: 8px; }
+.parallel-col { flex: 1; min-width: 0; }
+
+.restart-btn {
+  width: 100%; padding: 13px; border-radius: 10px;
+  border: 2px solid var(--navy); background: var(--white);
+  color: var(--navy); font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.restart-btn:hover { background: var(--navy); color: var(--white); }
+
+.welcome { text-align: center; padding: 36px 0 16px; }
+.welcome-icon { font-size: 44px; margin-bottom: 14px; }
+.welcome-title { font-size: 21px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.welcome-sub { font-size: 13px; color: var(--gray); line-height: 1.9; margin-bottom: 26px; }
+
+.back-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: none; color: var(--gray);
+  font-family: 'Noto Sans JP', sans-serif; font-size: 13px;
+  cursor: pointer; padding: 0 0 14px; transition: color 0.2s;
+}
+.back-btn:hover { color: var(--navy); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">OYADO KANRI</div>
+  <div class="header-sub">オーナー進捗ガイド — イマここ診断</div>
+</div>
+
+<div class="prog-wrap">
+  <div class="prog-top">
+    <span id="progText">進捗を確認しましょう</span>
+    <span id="progPct">—</span>
+  </div>
+  <div class="prog-bar-bg"><div class="prog-bar-fill" id="progFill" style="width:0%"></div></div>
+  <div class="phase-tags">
+    <div class="ptag" id="ptag0">Phase 1 相談・確認</div>
+    <div class="ptag" id="ptag1">Phase 2 許可証取得</div>
+    <div class="ptag" id="ptag2">Phase 3 物件準備</div>
+    <div class="ptag" id="ptag3">Phase 4 掲載・開始</div>
+  </div>
+</div>
+
+<div class="main">
+
+<div class="screen active" id="sc-welcome">
+  <div class="welcome">
+    <div class="welcome-icon">🏠</div>
+    <div class="welcome-title">民泊開始<br>イマここ診断</div>
+    <div class="welcome-sub">「はい／いいえ」で答えるだけで<br>今どのステップにいるかがわかります。<br>所要時間：約1分</div>
+    <button class="btn-start" onclick="startGuide()">▶ スタートする</button>
+  </div>
+</div>
+
+<div class="screen" id="sc-q1">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(26,39,68,0.1);color:var(--navy);">Phase 1　相談・確認</div>
+    <div class="card-title">お問い合わせ・ヒアリング</div>
+    <div class="card-desc">OYADO KANRIへのお問い合わせ後、担当者と物件の状況・ご希望・運用スタイルについてヒアリングを行います。</div>
+    <div class="q-label">💬 担当者とのヒアリングは済みましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q1',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q1',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<!-- 行政書士紹介案内 -->
+<div class="screen" id="sc-qgy">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">行政書士をご紹介します</div>
+    <div class="card-desc">OYADO KANRIの提携行政書士をご紹介いたします。<br><br>下記の情報を公式LINEよりお送りください。</div>
+    <div class="ac-item" style="padding:14px;background:var(--light);border-radius:10px;margin-bottom:16px;display:block;">
+      <div style="font-size:13px;color:var(--navy);line-height:2;">
+        📍 施設のご住所<br>
+        👤 お名前<br>
+        📞 お電話番号<br>
+        📧 メールアドレス
+      </div>
+    </div>
+    <a href="https://lin.ee/ObFD9eI" target="_blank" style="
+      display:block; width:100%; padding:16px; border-radius:10px;
+      background:#06C755; color:white; text-align:center;
+      font-size:15px; font-weight:700; text-decoration:none;
+      margin-bottom:12px;">
+      💬 公式LINEで送る
+    </a>
+    <button class="btn-start" style="font-size:14px;padding:13px;" onclick="ans('qgy',true)">送りました → 次へ進む</button>
+  </div>
+</div>
+<div class="screen" id="sc-q1b">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(26,39,68,0.1);color:var(--navy);">Phase 1　相談・確認</div>
+    <div class="card-title">施設条件の確認・お見積り</div>
+    <div class="card-desc">許可取得に向けて進む前に、必要な工事・消防設備のお見積りと、建物が許可条件を満たすかを確認します。条件・費用がご納得いただければ次のステップへ進みます。</div>
+    <div class="q-label">💬 工事・消防設備の見積りと建物条件の確認は済みましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q1b',true)">✓ 確認済み・条件OK</button>
+      <button class="btn btn-no" onclick="ans('q1b',false)">✗ まだ / 確認中</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q2b 許可証取得済み？ -->
+<div class="screen" id="sc-q2b">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(26,39,68,0.1);color:var(--navy);">Phase 1　相談・確認</div>
+    <div class="card-title">許可証はすでに取得済みですか？</div>
+    <div class="card-desc">すでに許可証をお持ちの場合は、物件準備・掲載設定へ一気に進めます！</div>
+    <div class="q-label">💬 許可証はすでに取得済みですか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q2b',true)">✓ はい、取得済み</button>
+      <button class="btn btn-no" onclick="ans('q2b',false)">✗ まだ取得していない</button>
+    </div>
+  </div>
+</div>
+
+<!-- Q2c 行政書士の要否 -->
+<div class="screen" id="sc-q2c">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">許可証の申請方法</div>
+    <div class="card-desc">許可証の申請はご自身で行うことも、行政書士に依頼することもできます。OYADO KANRIでは提携行政書士をご紹介することが可能です。</div>
+    <div class="q-label">💬 ご自身で申請予定ですか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q2c',true)">✓ 自分で取得する</button>
+      <button class="btn btn-no" onclick="ans('q2c',false)">✗ 行政書士に依頼したい</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q3">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得 / 自己申請</div>
+    <div class="card-title">消防設備の施工</div>
+    <div class="card-desc">見積り確認後、消防設備（自動火災報知機・誘導灯など）の施工を進めます。</div>
+    <div class="q-label">💬 消防設備の施工は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q3',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q3',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q3b">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得 / 自己申請</div>
+    <div class="card-title">消防点検</div>
+    <div class="card-desc">施工完了後、消防設備の点検を受けます。点検証明が許可申請に必要となります。</div>
+    <div class="q-label">💬 消防点検は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q3b',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q3b',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q3c">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得 / 自己申請</div>
+    <div class="card-title">住民説明会</div>
+    <div class="card-desc">旅館業法の申請では近隣住民への説明会が必要な場合があります。</div>
+    <div class="q-label">💬 住民説明会は完了しましたか？（不要な場合もはいを選択）</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q3c',true)">✓ 完了 / 不要</button>
+      <button class="btn btn-no" onclick="ans('q3c',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q3d">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得 / 自己申請</div>
+    <div class="card-title">保健所への申請</div>
+    <div class="card-desc">必要書類・設備が揃ったら保健所へ申請します。審査完了まで数週間〜数ヶ月かかります。</div>
+    <div class="q-label">💬 保健所への申請は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q3d',true)">✓ はい、申請済み</button>
+      <button class="btn btn-no" onclick="ans('q3d',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q3e">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得 / 自己申請</div>
+    <div class="card-title">保健所の立ち会い・許可証取得</div>
+    <div class="card-desc">保健所の担当者が施設に立ち会い検査を行います。問題がなければ許可証が交付されます。</div>
+    <div class="q-label">💬 保健所の立ち会いと許可証の取得は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q3e',true)">✓ はい、取得済み</button>
+      <button class="btn btn-no" onclick="ans('q3e',false)">✗ まだ / 立ち会い待ち</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q5">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">許可証 申請・取得</div>
+    <div class="card-desc">書類・消防設備が揃い次第、行政書士が申請手続きを進めます。取得まで数週間〜数ヶ月かかる場合があります。</div>
+    <div class="q-label">💬 許可証は取得できましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q5',true)">✓ はい、取得済み</button>
+      <button class="btn btn-no" onclick="ans('q5',false)">✗ 申請中・未取得</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q6">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(26,107,74,0.1);color:var(--green);">Phase 3　物件準備</div>
+    <div class="card-title">家具・家電の購入・設置</div>
+    <div class="card-desc">ゲストに快適な空間を提供するため、物件に合った備品の選定・購入・設置をOYADO KANRIがサポートします。</div>
+    <div class="q-label">💬 家具・家電の設置は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q6',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q6',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q7">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(26,107,74,0.1);color:var(--green);">Phase 3　物件準備</div>
+    <div class="card-title">撮影・掲載準備・マニュアル作成</div>
+    <div class="card-desc">プロカメラマンによる物件撮影、家電マニュアルおよびゲスト向けハウスルールを作成します。掲載クオリティが予約率に直結します。</div>
+    <div class="q-label">💬 撮影・マニュアル作成は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q7',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q7',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q8">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(122,74,26,0.1);color:var(--brown);">Phase 4　掲載・開始</div>
+    <div class="card-title">価格・ルール設定</div>
+    <div class="card-desc">エリア相場・季節需要・競合物件を分析し最適な価格戦略を設定します。最低宿泊日数・チェックイン条件なども決定します。</div>
+    <div class="q-label">💬 価格・ルール設定は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q8',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('q8',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-q9">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(122,74,26,0.1);color:var(--brown);">Phase 4　掲載・開始</div>
+    <div class="card-title">リスティング作成</div>
+    <div class="card-desc">Airbnb等のプラットフォームに掲載するリスティング（物件ページ）を作成します。写真・説明文・設備情報などを整え、公開準備を行います。作成後1〜2週間で予約受付開始となります。</div>
+    <div class="q-label">💬 リスティングの作成は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('q9',true)">✓ はい、作成済み</button>
+      <button class="btn btn-no" onclick="ans('q9',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-result"></div>
+
+<!-- 行政書士ルート サブフロー -->
+<div class="screen" id="sc-qa1">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">必要書類の準備・提出</div>
+    <div class="card-desc">行政書士から指示された書類（登記簿謄本・間取り図・写真など）を準備し提出します。</div>
+    <div class="q-label">💬 行政書士への必要書類の提出は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('qa1',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('qa1',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-qa1b">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">施設条件の確認・お見積り</div>
+    <div class="card-desc">許可取得に向けて進む前に、必要な工事・消防設備のお見積りと、建物が許可条件を満たすかを確認します。条件・費用がご納得いただければ次のステップへ進みます。</div>
+    <div class="q-label">💬 工事・消防設備の見積りと建物条件の確認は済みましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('qa1b',true)">✓ 確認済み・条件OK</button>
+      <button class="btn btn-no" onclick="ans('qa1b',false)">✗ まだ / 確認中</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-qa2">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">住民説明会</div>
+    <div class="card-desc">旅館業法の申請では近隣住民への説明会が必要な場合があります。行政書士と連携して進めます。</div>
+    <div class="q-label">💬 住民説明会は完了しましたか？（不要な場合もはいを選択）</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('qa2',true)">✓ 完了 / 不要</button>
+      <button class="btn btn-no" onclick="ans('qa2',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-qa3">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">消防設備の施工・設置</div>
+    <div class="card-desc">許可申請に必要な消防設備（自動火災報知機・誘導灯など）を施工・設置します。弊社が業者手配をサポートします。</div>
+    <div class="q-label">💬 消防設備の施工・設置は完了しましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('qa3',true)">✓ はい</button>
+      <button class="btn btn-no" onclick="ans('qa3',false)">✗ まだ</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="sc-qa4">
+  <div class="card">
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="phase-badge" style="background:rgba(44,74,138,0.1);color:var(--navy2);">Phase 2　許可証取得</div>
+    <div class="card-title">保健所への申請</div>
+    <div class="card-desc">必要書類・設備が揃ったら、行政書士が保健所への申請手続きを進めます。審査完了まで数週間〜数ヶ月かかります。</div>
+    <div class="q-label">💬 許可証は取得できましたか？</div>
+    <div class="btn-row">
+      <button class="btn btn-yes" onclick="ans('qa4',true)">✓ はい、取得済み</button>
+      <button class="btn btn-no" onclick="ans('qa4',false)">✗ 申請中・未取得</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// 画面履歴スタック
+const history = [];
+let gyoseiRoute = false; // 行政書士ルートかどうか
+
+function goBack() {
+  if (history.length < 2) { restart(); return; }
+  history.pop(); // 現在の画面を除去
+  const prev = history[history.length - 1];
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc-' + prev.screen).classList.add('active');
+  if (prev.stepIdx !== undefined) setProgress(prev.stepIdx, prev.pct);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const STEPS = [
+  { n:'1',  name:'お問い合わせ',                phase:0 },
+  { n:'2',  name:'ヒアリング',                  phase:0 },
+  { n:'3',  name:'許可証の種類確認',            phase:0 },
+  { n:'4',  name:'行政書士の確認',              phase:0 },
+  { n:'5',  name:'行政書士への依頼・書類共有',  phase:1 },
+  { n:'6',  name:'消防設備 見積→施工→点検',    phase:1 },
+  { n:'7',  name:'許可証 申請・取得',           phase:1 },
+  { n:'8',  name:'家具・家電の購入・設置',      phase:2 },
+  { n:'9',  name:'撮影・掲載準備',              phase:2 },
+  { n:'10', name:'マニュアル・ハウスルール作成',phase:2 },
+  { n:'11', name:'価格・ルール設定',            phase:3 },
+  { n:'12', name:'掲載・予約開始',              phase:3 },
+];
+const PHASE_LABELS = ['Phase 1　相談・確認','Phase 2　許可証取得','Phase 3　物件準備','Phase 4　掲載・開始'];
+const PHASE_CSS    = ['var(--navy)','var(--navy2)','var(--green)','var(--brown)'];
+
+function setProgress(stepIdx, pct) {
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progText').textContent =
+    stepIdx < STEPS.length
+      ? `STEP ${STEPS[stepIdx].n} / 12　${STEPS[stepIdx].name}`
+      : '🎉 掲載・予約スタート！';
+  const cur = stepIdx < STEPS.length ? STEPS[stepIdx].phase : 4;
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('ptag' + i);
+    el.className = 'ptag' + (i < cur ? ' done' : i === cur ? ' active' : '');
+  }
+}
+
+function showScreen(id, stepIdx, pct) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc-' + id).classList.add('active');
+  history.push({ screen: id, stepIdx, pct });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function ans(q, yes) {
+  const map = {
+    q1: {
+      yes: () => { setProgress(2, 25); showScreen('q2b', 2, 25); },
+      no:  () => showResult(0, 'waitOwner', 'ヒアリングを始めましょう',
+        ['ご都合の良い日時をお知らせください','物件の概要（場所・間取り）をご準備ください'], null, true),
+    },
+    q2b: {
+      yes: () => { setProgress(8, 78); showScreen('q7', 8, 78); },
+      no:  () => { setProgress(3, 30); showScreen('q2c', 3, 30); },
+    },
+    q2c: {
+      yes: () => { gyoseiRoute = false; setProgress(3, 33); showScreen('q1b', 3, 33); },
+      no:  () => { gyoseiRoute = true;  setProgress(3, 30); showScreen('qgy', 3, 30); },
+    },
+    qgy: {
+      yes: () => { setProgress(4, 40); showScreen('qa1', 4, 40); },
+    },
+    q1b: {
+      // 見積りOK → ルートによって分岐
+      yes: () => {
+        if (gyoseiRoute) {
+          setProgress(4, 40); showScreen('qa1', 4, 40);
+        } else {
+          setProgress(5, 50); showScreen('q3', 5, 50);
+        }
+      },
+      no: () => {
+        if (gyoseiRoute) {
+          showResult(1, 'waitGyosei', '施設条件・見積りを確認中です',
+            null, '行政書士または施工業者が対応しています。\nご質問がある場合はそれぞれにご連絡ください。');
+        } else {
+          showResult(1, 'waitOwner', '施設条件・見積りを確認中です',
+            null, '施工業者が対応しています。\nご質問がある場合は施工業者へご連絡ください。');
+        }
+      },
+    },
+    qa1: {
+      yes: () => { setProgress(5, 45); showScreen('qa1b', 5, 45); },
+      no:  () => showResult(4, 'action', '必要書類をご準備ください',
+        ['行政書士から指定された書類をご準備ください','詳しくは行政書士へお問い合わせください','準備が整いましたら行政書士へご提出ください'], null),
+    },
+    qa1b: {
+      yes: () => { setProgress(5, 50); showScreen('qa2', 5, 50); },
+      no:  () => showResult(4, 'waitGyosei', '施設条件・見積りを確認中です',
+        null, '行政書士が対応しています。\nご質問がある場合は行政書士へご連絡ください。'),
+    },
+    qa2: {
+      yes: () => { setProgress(5, 50); showScreen('qa3', 5, 50); },
+      no:  () => showResult(5, 'waitGyosei', '住民説明会を進めています',
+        null, '行政書士が対応しています。\nご質問がある場合は行政書士へご連絡ください。'),
+    },
+    qa3: {
+      yes: () => { setProgress(6, 55); showScreen('qa4', 6, 55); },
+      no:  () => showResult(5, 'waitOwner', '消防設備の施工・設置を進めています',
+        null, '消防設備の施工・設置をお願いします。完了しましたら担当者にお知らせください。\n\nPhase 3（物件準備）も並行して進めています。'),
+    },
+    qa4: {
+      yes: () => { setProgress(7, 68); showScreen('q6', 7, 68); },
+      no:  () => showResult(6, 'waitGyosei', '保健所へ申請中です',
+        null, '行政書士が対応しています。\nご質問がある場合は行政書士へご連絡ください。\n\nこの間もPhase 3（物件準備）は並行して進めています。'),
+    },
+    q3: {
+      yes: () => { setProgress(6, 55); showScreen('q3b', 6, 55); },
+      no:  () => showResult(5, 'waitOwner', '消防設備の施工を進めています',
+        null, '消防設備の施工をお願いします。完了しましたら担当者にお知らせください。\n\nPhase 3（物件準備）も並行して進めています。'),
+    },
+    q3b: {
+      yes: () => { setProgress(6, 58); showScreen('q3c', 6, 58); },
+      no:  () => showResult(5, 'waitOwner', '消防点検を進めています',
+        null, '消防点検の受検をお願いします。完了しましたら担当者にお知らせください。'),
+    },
+    q3c: {
+      yes: () => { setProgress(6, 61); showScreen('q3d', 6, 61); },
+      no:  () => showResult(5, 'waitOwner', '住民説明会を進めています',
+        null, '住民説明会の実施をお願いします。不要な場合はそのまま次へお進みください。'),
+    },
+    q3d: {
+      yes: () => { setProgress(6, 64); showScreen('q3e', 6, 64); },
+      no:  () => showResult(5, 'waitOwner', '保健所への申請を進めています',
+        null, '保健所への申請書類をご準備のうえ、申請をお願いします。完了しましたら担当者にお知らせください。'),
+    },
+    q3e: {
+      yes: () => { setProgress(7, 68); showScreen('q6', 7, 68); },
+      no:  () => showResult(6, 'waitOwner', '保健所の立ち会い待ちです',
+        null, '保健所の立ち会い日程をご確認ください。当日は施設でお立ち合いをお願いします。\n\nこの間もPhase 3（物件準備）は並行して進めています。'),
+    },
+    q5: {
+      yes: () => { setProgress(7, 68); showScreen('q6', 7, 68); },
+      no:  () => showResult(6, 'waitGyosei', '許可証 申請中です',
+        null, '行政書士が対応しています。\nご質問がある場合は行政書士へご連絡ください。\n\nこの間もPhase 3（物件準備）は並行して進めています。'),
+    },
+    q6: {
+      yes: () => { setProgress(8, 78); showScreen('q7', 8, 78); },
+      no:  () => showResult(7, 'action', '家具・家電の購入・設置',
+        ['弊社が必要備品リストをご提案します','ご自身で用意される場合はリストをご確認ください','設置完了後に担当者へお知らせください'], null),
+    },
+    q7: {
+      yes: () => { setProgress(10, 88); showScreen('q8', 10, 88); },
+      no:  () => showResult(8, 'wait', '撮影・マニュアル作成を進めています',
+        null, '弊社スタッフが撮影・マニュアル・ハウスルールの作成を進めています。完成後にご確認いただきます。'),
+    },
+    q8: {
+      yes: () => { setProgress(11, 92); showScreen('q9', 11, 92); },
+      no:  () => showResult(10, 'action', '価格・ルール設定',
+        ['担当者からエリア相場に基づく価格プランをご提案します','最低宿泊日数・チェックイン時間などをご確認ください','OKをいただき次第、リスティング作成に進みます！'], null),
+    },
+    q9: {
+      yes: () => { showResult(11, 'done', '予約受付スタート！', null, null); setProgress(12, 100); },
+      no:  () => showResult(11, 'wait', 'リスティング作成中です',
+        null, '弊社がリスティングを作成しています。完成後にご確認いただき、公開後1〜2週間で予約受付開始となります。'),
+    },
+  };
+  map[q][yes ? 'yes' : 'no']();
+}
+
+function showResult(stepIdx, type, title, actions, waitMsg, showLine) {
+  const phaseIdx = stepIdx < STEPS.length ? STEPS[stepIdx].phase : 3;
+  const phaseLabel = PHASE_LABELS[Math.min(phaseIdx, 3)];
+
+  const statusHTML = {
+    action:     '<span class="ik-status s-action">✏️ アクションが必要です</span>',
+    wait:       '<span class="ik-status s-wait">⏳ 弊社が対応中 — お待ちください</span>',
+    waitGyosei: '<span class="ik-status s-wait">⏳ 行政書士が対応中 — お待ちください</span>',
+    waitOwner:  '<span class="ik-status s-action">✏️ オーナー様にご対応いただいています</span>',
+    done:       '<span class="ik-status s-done">🎉 すべて完了！</span>',
+  }[type];
+
+  const waitTitle = {
+    wait:       '今は弊社が動いています',
+    waitGyosei: '行政書士が対応しています',
+    waitOwner:  '今はオーナー様にご対応いただいています',
+  }[type] || '今は弊社が動いています';
+
+  const lineButtonHTML = showLine ? `
+    <a href="https://lin.ee/ObFD9eI" target="_blank" style="
+      display:block; width:100%; padding:16px; border-radius:10px;
+      background:#06C755; color:white; text-align:center;
+      font-size:15px; font-weight:700; text-decoration:none;
+      margin-bottom:16px;">
+      💬 公式LINEでお問い合わせ
+    </a>` : '';
+
+  const actionsHTML = actions ? `
+    <div class="action-card">
+      <div class="ac-title">📌 次にやること</div>
+      ${actions.map((a,i) => `<div class="ac-item"><div class="ac-num">${i+1}</div><div>${a}</div></div>`).join('')}
+    </div>` : '';
+
+  const waitHTML = waitMsg ? `
+    <div class="wait-card">
+      <div class="wait-icon">☕</div>
+      <div class="wait-title">${waitTitle}</div>
+      <div class="wait-desc">${waitMsg.replace(/\n\n/g,'<br><br>')}</div>
+    </div>` : '';
+
+  const completeHTML = type === 'done' ? `
+    <div class="complete-card">
+      <div style="font-size:36px;margin-bottom:10px;">🎊</div>
+      <div style="font-size:18px;font-weight:700;color:var(--green);margin-bottom:8px;">おめでとうございます！</div>
+      <div style="font-size:13px;color:var(--green);line-height:1.8;">すべての準備が整いました。<br>リスティング公開後、1〜2週間で予約受付開始となります。<br>OYADO KANRIと一緒に収益最大化を目指しましょう！</div>
+    </div>` : '';
+
+  document.getElementById('sc-result').innerHTML = `
+    <button class="back-btn" onclick="goBack()">← 戻る</button>
+    <div class="imakoko-box">
+      <div class="ik-eyebrow">▶ イマ ここ</div>
+      <div class="ik-phase">${phaseLabel}</div>
+      <div class="ik-title">${title}</div>
+      ${statusHTML}
+    </div>
+    ${lineButtonHTML}${actionsHTML}${waitHTML}${completeHTML}
+    ${buildRoadmap(stepIdx)}
+    <button class="restart-btn" onclick="restart()">↩ 最初からやり直す</button>
+  `;
+
+  setProgress(stepIdx, Math.round(stepIdx / STEPS.length * 100));
+  showScreen('result');
+}
+
+function buildRoadmap(currentIdx) {
+  const ph1 = [0,1,2,3];
+  const ph2 = [4,5,6];
+  const ph3 = [7,8,9];
+  const ph4 = [10,11];
+
+  function rows(indices) {
+    return indices.map(i => {
+      const isDone = i < currentIdx, isCur = i === currentIdx;
+      return `<div class="rm-row ${isCur?'row-current':isDone?'row-done':''}">
+        <div class="rm-dot ${isCur?'current':isDone?'done':''}"></div>
+        <span>${STEPS[i].n}. ${STEPS[i].name}</span>
+        ${isCur ? '<span class="rm-now-badge">← イマここ</span>' : isDone ? '<span class="rm-check">✓</span>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function phaseBlock(label, color, indices, extraStyle='') {
+    return `<div class="rm-phase" ${extraStyle}>
+      <div class="rm-phase-label" style="background:rgba(0,0,0,0.07);color:${color};">${label}</div>
+      ${rows(indices)}
+    </div>`;
+  }
+
+  return `<div class="rm-card">
+    <div class="rm-card-title">🗺️ 全体ロードマップ</div>
+    ${phaseBlock('Phase 1　相談・確認', 'var(--navy)', ph1)}
+    <div class="parallel-note">⚡ Phase 2・3 は同時並行で進めます</div>
+    <div class="parallel-cols">
+      ${phaseBlock('Phase 2　許可証取得', 'var(--navy2)', ph2, 'style="flex:1;min-width:0;"')}
+      ${phaseBlock('Phase 3　物件準備',   'var(--green)',  ph3, 'style="flex:1;min-width:0;"')}
+    </div>
+    ${phaseBlock('Phase 4　掲載・開始', 'var(--brown)', ph4)}
+  </div>`;
+}
+
+function startGuide() {
+  history.length = 0;
+  history.push({ screen: 'welcome' });
+  setProgress(0, 5);
+  showScreen('q1', 0, 5);
+}
+
+function restart() {
+  history.length = 0;
+  setProgress(0, 0);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('sc-welcome').classList.add('active');
+  history.push({ screen: 'welcome' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
